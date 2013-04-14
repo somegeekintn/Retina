@@ -176,16 +176,25 @@ void WGProcessPath(int options, NSString *path) {
 }
 
 void WGProcessDirectory(int options, NSString *path) {
+  NSFileManager *fileManager = [NSFileManager defaultManager];
   NSError *error = nil;
-  
   NSArray *files;
-  if((files = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:path error:&error]) == nil){
+  NSString *nextPath;
+  BOOL directory;
+  
+  if((files = [fileManager contentsOfDirectoryAtPath:path error:&error]) == nil){
     fprintf(stderr, "%s: * * * unable to list directory at path: %s: %s\n", kCommand, [path UTF8String], [[error localizedDescription] UTF8String]);
     return;
   }
   
   for(NSString *file in files){
-    WGProcessFile(options, [path stringByAppendingPathComponent:file]);
+	nextPath = [path stringByAppendingPathComponent:file];
+	[fileManager fileExistsAtPath:nextPath isDirectory:&directory];
+	if (directory) {
+      WGProcessDirectory(options, nextPath);
+    }else{
+      WGProcessFile(options, nextPath);
+	}
   }
   
 }
